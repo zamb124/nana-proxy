@@ -3,15 +3,22 @@ import json
 from enum import Enum
 from typing import List
 from typing import Optional
-from uuid import uuid4
 from random import randint
 
 from flask import Flask
 from flask_pydantic import validate
 from pydantic import BaseModel, validator
 from functools import wraps
-from flask import g, request, redirect, url_for, Response
+from flask import request, Response
+from pydantic import ValidationError
+
+try:
+    from flask_restful import original_flask_make_response as make_response
+except ImportError:
+    pass
+
 app = Flask(__name__)
+app.config['TRAP_HTTP_EXCEPTIONS'] = True
 
 
 def require_api_token(func):
@@ -26,6 +33,7 @@ def require_api_token(func):
 
     return check_token
 
+
 class CartItem(BaseModel):
     id: str
     quantity: float
@@ -34,14 +42,17 @@ class CartItem(BaseModel):
     stack_price: Optional[float]
     stack_full_price: Optional[float]
 
+
 class Cart(BaseModel):
     items: List[CartItem]
     cart_total_cost: Optional[float]
     cart_total_discount: Optional[float]
 
+
 class PaymentType(str, Enum):
     cash = 'cash'
     online = 'online'
+
 
 class Point(BaseModel):
     lat: float
@@ -76,25 +87,34 @@ class Location(BaseModel):
     postal_code: Optional[str]
     comment: Optional[str]
 
-class RequestBodyModel(BaseModel):
-  user_id: str
-  user_phone: str
-  cart: Cart
-  payment_type: PaymentType
-  location: Location
-  created_order_id: Optional[str]
-  use_external_delivery: Optional[bool]
+
+class RequestOrder(BaseModel):
+    user_id: str
+    user_phone: str
+    cart: Cart
+    payment_type: PaymentType
+    location: Location
+    created_order_id: Optional[str]
+    use_external_delivery: Optional[bool]
 
 
 @app.route('/lavka/v1/integration-entry/v1/order/submit', methods=['POST'])
-@validate()
-#@require_api_token
-def hello_world(body: RequestBodyModel):
+# @validate(body=RequestOrder, response_many=True)
+# @require_api_token
+def hello_world():
+    try:
+        RequestOrder(**request.json)
+    except ValidationError as e:
+        return Response(json.dumps({
+            "code": "bad_request",
+            "message": str(e)
+        }), status=400, mimetype='application/json')
     dat = datetime.date.today()
     return json.dumps({
         "order_id": f"{dat.strftime('%y%m%d')}-{randint(100000, 999999)}",
         "newbie": False
     })
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
