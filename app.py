@@ -3,6 +3,7 @@ from typing import Optional
 from flask import Flask, request
 from pydantic import BaseModel, validator
 from enum import Enum
+from typing import List
 from flask_pydantic import validate
 import json
 
@@ -17,7 +18,7 @@ class CartItem(BaseModel):
     stack_full_price: Optional[float]
 
 class Cart(BaseModel):
-    items: CartItem
+    items: List[CartItem]
     cart_total_cost: Optional[float]
     cart_total_discount: Optional[float]
 
