@@ -107,7 +107,11 @@ def hello_world():
     except ValidationError as e:
         return Response(json.dumps({
             "code": "bad_request",
-            "message": str(e)
+            "message": str(e),
+            "details": {
+                "cart": None,
+                "retry_after": 5
+            }
         }), status=400, mimetype='application/json')
     dat = datetime.date.today()
     return json.dumps({
