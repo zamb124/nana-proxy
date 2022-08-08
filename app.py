@@ -1,28 +1,28 @@
-from flask import Flask
-from typing import Optional
-from flask import Flask, request
-from pydantic import BaseModel, validator
+import json
 from enum import Enum
 from typing import List
-from flask_pydantic import validate
-import json
+from typing import Optional
 from uuid import uuid4
-from functools import wraps
 
+from flask import Flask
+from flask_pydantic import validate
+from pydantic import BaseModel
+from functools import wraps
+from flask import g, request, redirect, url_for, Response
 app = Flask(__name__)
 
-# def require_api_token(func):
-#     @wraps(func)
-#     def check_token(*args, **kwargs):
-#         # Check to see if it's in their session
-#         if 'api_session_token' not in session:
-#             # If it isn't return our access denied message (you can also return a redirect or render_template)
-#             return Response("Access denied")
-#
-#         # Otherwise just send them where they wanted to go
-#         return func(*args, **kwargs)
-#
-#     return check_token
+
+def require_api_token(func):
+    @wraps(func)
+    def check_token(*args, **kwargs):
+        if not request.headers.get('Authorization'):
+            return Response(json.dumps({
+                "code": "Auth",
+                "message": "No Auth"
+            }))
+        return func(*args, **kwargs)
+
+    return check_token
 
 class CartItem(BaseModel):
     id: str
@@ -67,18 +67,18 @@ class RequestBodyModel(BaseModel):
   cart: Cart
   payment_type: PaymentType
   location: Location
+  created_order_id: Optional[str]
+  use_external_delivery: Optional[bool]
 
 
 @app.route('/lavka/v1/integration-entry/v1/order/submit', methods=['POST'])
 @validate()
+#@require_api_token
 def hello_world(body: RequestBodyModel):
-    name = body.user_id
-    nickname = body.user_id
     return json.dumps({
-        "order_id": uuid4().hex,
+        "order_id": f'{uuid4().hex}',
         "newbie": False
     })
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=False)
