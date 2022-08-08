@@ -1,12 +1,14 @@
+import datetime
 import json
 from enum import Enum
 from typing import List
 from typing import Optional
 from uuid import uuid4
+from random import randint
 
 from flask import Flask
 from flask_pydantic import validate
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from functools import wraps
 from flask import g, request, redirect, url_for, Response
 app = Flask(__name__)
@@ -45,6 +47,19 @@ class Point(BaseModel):
     lat: float
     lon: float
 
+    @validator('lat')
+    def lat_min_max(cls, lat):
+        if lat > 90 or lat < -90:
+            raise ValueError("minimum: -90 or maximum: 90")
+        return lat
+
+    @validator('lon')
+    def lon_min_max(cls, lon):
+        if lon > 180 or lon < -180:
+            raise ValueError("minimum: -180 or maximum: 180")
+        return lon
+
+
 class Location(BaseModel):
     position: Point
     place_id: str
@@ -75,8 +90,9 @@ class RequestBodyModel(BaseModel):
 @validate()
 #@require_api_token
 def hello_world(body: RequestBodyModel):
+    dat = datetime.date.today()
     return json.dumps({
-        "order_id": f'{uuid4().hex}',
+        "order_id": f"{dat.strftime('%y%m%d')}-{randint(100000, 999999)}",
         "newbie": False
     })
 
