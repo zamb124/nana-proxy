@@ -103,7 +103,7 @@ class RequestOrder(BaseModel):
 @require_api_token
 def hello_world():
     try:
-        RequestOrder(**request.json)
+        body = RequestOrder(**request.json)
     except ValidationError as e:
         return Response(json.dumps({
             "code": "bad_request",
@@ -116,7 +116,8 @@ def hello_world():
     dat = datetime.date.today()
     return json.dumps({
         "order_id": f"{dat.strftime('%y%m%d')}-{randint(100000, 999999)}",
-        "newbie": False
+        "newbie": False,
+        "vars": body.dict()
     })
 
 
