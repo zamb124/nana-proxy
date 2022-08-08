@@ -26,9 +26,9 @@ def require_api_token(func):
     def check_token(*args, **kwargs):
         if not request.headers.get('Authorization'):
             return Response(json.dumps({
-                "code": "Auth",
-                "message": "No Auth"
-            }))
+                "code": "bad_request",
+                "message": "Auth Error",
+            }), status=401, mimetype='application/json')
         return func(*args, **kwargs)
 
     return check_token
@@ -100,13 +100,13 @@ class RequestOrder(BaseModel):
 
 @app.route('/lavka/v1/integration-entry/v1/order/submit', methods=['POST'])
 # @validate(body=RequestOrder, response_many=True)
-# @require_api_token
+@require_api_token
 def hello_world():
     try:
         RequestOrder(**request.json)
     except ValidationError as e:
         return Response(json.dumps({
-            "code": "bad_request",
+            "code": "unauthorized",
             "message": str(e),
             "details": {
                 "cart": None,
