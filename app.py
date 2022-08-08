@@ -54,12 +54,6 @@ class RequestBodyModel(BaseModel):
   location: Location
 
 
-
-
-
-
-
-
 @app.route('/lavka/v1/integration-entry/v1/order/submit', methods=['POST'])
 @validate()
 def hello_world(body: RequestBodyModel):
@@ -69,4 +63,4 @@ def hello_world(body: RequestBodyModel):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port=80)
