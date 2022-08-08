@@ -117,7 +117,6 @@ def hello_world():
     return json.dumps({
         "order_id": f"{dat.strftime('%y%m%d')}-{randint(100000, 999999)}",
         "newbie": False,
-        "vars": body.dict()
     })
 
 
