@@ -26,7 +26,7 @@ def require_api_token(func):
     def check_token(*args, **kwargs):
         if not request.headers.get('Authorization'):
             return Response(json.dumps({
-                "code": "bad_request",
+                "code": "unauthorized",
                 "message": "Auth Error",
             }), status=401, mimetype='application/json')
         return func(*args, **kwargs)
@@ -106,7 +106,7 @@ def hello_world():
         RequestOrder(**request.json)
     except ValidationError as e:
         return Response(json.dumps({
-            "code": "unauthorized",
+            "code": "bad_request",
             "message": str(e),
             "details": {
                 "cart": None,
