@@ -6,8 +6,23 @@ from enum import Enum
 from typing import List
 from flask_pydantic import validate
 import json
+from uuid import uuid4
+from functools import wraps
 
 app = Flask(__name__)
+
+# def require_api_token(func):
+#     @wraps(func)
+#     def check_token(*args, **kwargs):
+#         # Check to see if it's in their session
+#         if 'api_session_token' not in session:
+#             # If it isn't return our access denied message (you can also return a redirect or render_template)
+#             return Response("Access denied")
+#
+#         # Otherwise just send them where they wanted to go
+#         return func(*args, **kwargs)
+#
+#     return check_token
 
 class CartItem(BaseModel):
     id: str
@@ -59,8 +74,11 @@ class RequestBodyModel(BaseModel):
 def hello_world(body: RequestBodyModel):
     name = body.user_id
     nickname = body.user_id
-    return json.dumps(body.dict())
+    return json.dumps({
+        "order_id": uuid4().hex,
+        "newbie": False
+    })
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=80, debug=False)
