@@ -1,5 +1,5 @@
 import datetime
-import json
+import json, re
 from enum import Enum
 from typing import List
 from typing import Optional
@@ -36,18 +36,31 @@ def require_api_token(func):
 
 class CartItem(BaseModel):
     id: str
-    quantity: float
-    full_price: float
+    quantity: str
+    full_price: str
     title: Optional[str]
-    stack_price: Optional[float]
-    stack_full_price: Optional[float]
+    stack_price: Optional[str]
+    stack_full_price: Optional[str]
+
+    @validator('stack_full_price', 'stack_price', 'quantity', 'full_price')
+    def check_phoneNumber_format(cls, v):
+        regExs = '^\d+(\.\d*)?$'
+        if not bool(re.match(regExs, v)):
+            raise ValueError(f"Error {v} Basically Decimal<4>")
+        return v
 
 
 class Cart(BaseModel):
     items: List[CartItem]
-    cart_total_cost: Optional[float]
-    cart_total_discount: Optional[float]
+    cart_total_cost: Optional[str]
+    cart_total_discount: Optional[str]
 
+    @validator('cart_total_discount', 'cart_total_cost')
+    def check_phoneNumber_format(cls, v):
+        regExs = '^\d+(\.\d*)?$'
+        if not bool(re.match(regExs, v)):
+            raise ValueError(f"Error {v} Basically Decimal<4>")
+        return v
 
 class PaymentType(str, Enum):
     cash = 'cash'
