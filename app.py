@@ -1,16 +1,17 @@
 import datetime
-import json, re
+import json
+import re
 from enum import Enum
+from functools import wraps
+from random import randint
 from typing import List
 from typing import Optional
-from random import randint
 
 from flask import Flask
-from flask_pydantic import validate
-from pydantic import BaseModel, validator
-from functools import wraps
 from flask import request, Response
-from pydantic import ValidationError
+from flask_pydantic_spec import FlaskPydanticSpec
+from pydantic import BaseModel, validator
+from pydantic import ValidationError, constr
 
 try:
     from flask_restful import original_flask_make_response as make_response
@@ -36,31 +37,18 @@ def require_api_token(func):
 
 class CartItem(BaseModel):
     id: str
-    quantity: str
-    full_price: str
+    quantity: constr(regex=r'^\d+(\.\d*)?$')
+    full_price: constr(regex=r'^\d+(\.\d*)?$')
     title: Optional[str]
-    stack_price: Optional[str]
-    stack_full_price: Optional[str]
-
-    @validator('stack_full_price', 'stack_price', 'quantity', 'full_price')
-    def check_phoneNumber_format(cls, v):
-        regExs = '^\d+(\.\d*)?$'
-        if not bool(re.match(regExs, v)):
-            raise ValueError(f"Error {v} Basically Decimal<4>")
-        return v
+    stack_price: Optional[constr(regex=r'^\d+(\.\d*)?$')]
+    stack_full_price: Optional[constr(regex=r'^\d+(\.\d*)?$')]
 
 
 class Cart(BaseModel):
     items: List[CartItem]
-    cart_total_cost: Optional[str]
-    cart_total_discount: Optional[str]
+    cart_total_cost: Optional[constr(regex=r'^\d+(\.\d*)?$')]
+    cart_total_discount: Optional[constr(regex=r'^\d+(\.\d*)?$')]
 
-    @validator('cart_total_discount', 'cart_total_cost')
-    def check_phoneNumber_format(cls, v):
-        regExs = '^\d+(\.\d*)?$'
-        if not bool(re.match(regExs, v)):
-            raise ValueError(f"Error {v} Basically Decimal<4>")
-        return v
 
 class PaymentType(str, Enum):
     cash = 'cash'
@@ -110,6 +98,7 @@ class RequestOrder(BaseModel):
     created_order_id: Optional[str]
     use_external_delivery: Optional[bool]
 
+api = FlaskPydanticSpec('flask', path='doc')
 
 @app.route('/lavka/v1/integration-entry/v1/order/submit', methods=['POST'])
 # @validate(body=RequestOrder, response_many=True)
@@ -125,7 +114,7 @@ def hello_world():
                 "cart": None,
                 "retry_after": 5
             }
-        }), status=400, mimetype='application/json')
+        }), status=400)
     dat = datetime.date.today()
     return json.dumps({
         "order_id": f"{dat.strftime('%y%m%d')}-{randint(100000, 999999)}",
