@@ -9,7 +9,6 @@ from typing import Optional
 
 from flask import Flask
 from flask import request, Response
-from flask_pydantic_spec import FlaskPydanticSpec
 from pydantic import BaseModel, validator
 from pydantic import ValidationError, constr
 
@@ -21,6 +20,20 @@ except ImportError:
 app = Flask(__name__)
 app.config['TRAP_HTTP_EXCEPTIONS'] = True
 
+
+class Numeric(str):
+    pattern = r'^\d+(\.\d*)?$'
+
+    @classmethod
+    def validate(cls, v):
+        if not isinstance(v, str):
+            raise ValueError(f'str expected, got{type(v)}')
+        if not re.match(pattern=cls.pattern, string=v):
+            raise ValueError(f'Wrong value {v} for pattern {cls.pattern}')
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
 
 def require_api_token(func):
     @wraps(func)
@@ -37,17 +50,17 @@ def require_api_token(func):
 
 class CartItem(BaseModel):
     id: str
-    quantity: constr(regex=r'^\d+(\.\d*)?$')
-    full_price: constr(regex=r'^\d+(\.\d*)?$')
+    quantity: Numeric
+    full_price: Numeric
     title: Optional[str]
-    stack_price: Optional[constr(regex=r'^\d+(\.\d*)?$')]
-    stack_full_price: Optional[constr(regex=r'^\d+(\.\d*)?$')]
+    stack_price: Optional[Numeric]
+    stack_full_price: Optional[Numeric]
 
 
 class Cart(BaseModel):
     items: List[CartItem]
-    cart_total_cost: Optional[constr(regex=r'^\d+(\.\d*)?$')]
-    cart_total_discount: Optional[constr(regex=r'^\d+(\.\d*)?$')]
+    cart_total_cost: Optional[Numeric]
+    cart_total_discount: Optional[Numeric]
 
 
 class PaymentType(str, Enum):
@@ -97,8 +110,6 @@ class RequestOrder(BaseModel):
     location: Location
     created_order_id: Optional[str]
     use_external_delivery: Optional[bool]
-
-api = FlaskPydanticSpec('flask', path='doc')
 
 @app.route('/lavka/v1/integration-entry/v1/order/submit', methods=['POST'])
 # @validate(body=RequestOrder, response_many=True)
